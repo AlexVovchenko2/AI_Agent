@@ -1,0 +1,79 @@
+# ============================================
+# Python (стандартный)
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Виртуальные окружения
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# ============================================
+# Наш проект (дополнительно)
+# ============================================
+
+# Модели (ОБЯЗАТЕЛЬНО - файлы по 4+ ГБ)
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Логи агента
+logs/
+*.log
+agent_output/
+
+# Временные файлы
+.cache/
+*.tmp
+*.temp
+
+# DuckDuckGo кэш (если библиотека кэширует)
+.ddg_cache/
+
+# OS файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Секреты (если добавишь API ключи позже)
+.env.local
+secrets.json
