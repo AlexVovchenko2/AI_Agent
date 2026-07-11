@@ -2,7 +2,9 @@
 
 from llama_cpp import Llama
 from tools.registry import tools_json, execute_tool
+from agent.prompts import get_system_prompt
 from utils.colors import C
+from config import USER_TIMEZONE
 import json
 import re
 
@@ -86,15 +88,16 @@ def run_agent(llm: Llama, user_input: str, max_iterations: int = 5) -> str:
     Возвращает финальный ответ агента
     """
 
+    # Генерируем системный промпт
+    system_prompt = get_system_prompt(
+        available_tools=tools_json,
+        user_timezone=USER_TIMEZONE  
+    )
+
     messages = [
         {
             "role": "system",
-            "content": """You are a helpful assistant with access to tools. Use them when needed to answer questions accurately.
-            IMPORTANT: The get_current_time tool returns time in UTC (Coordinated Universal Time).
-The user is in {USER_TIMEZONE} timezone (UTC{USER_UTC_OFFSET:+d}).
-When the user asks about local time, convert UTC to their timezone. 
-If user asks about local time in certain area you should add or subtract exact number of hours and minutes.
-            """
+            "content": system_prompt
         },
         {
             "role": "user",
@@ -147,15 +150,15 @@ If user asks about local time in certain area you should add or subtract exact n
                 except json.JSONDecodeError:
                     func_args = {}
 
-                print(f"  {C.TOOL_CALL}→ Вызов:{C.RESET} {func_name}({func_args})")
+                print(f"  {C.TOOL_CALL} [TOOL]: Вызов{C.RESET} {func_name}({func_args})")
 
                 tool_result = execute_tool(func_name, func_args)
                 
                 # Разный цвет для результата и ошибки
                 if str(tool_result).startswith("Ошибка"):
-                    print(f"  {C.TOOL_ERROR}← Результат:{C.RESET} {tool_result}")
+                    print(f"  {C.TOOL_ERROR}[TOOL]: Результат - {C.RESET} {tool_result}")
                 else:
-                    print(f"  {C.TOOL_RESULT}← Результат:{C.RESET} {tool_result}")
+                    print(f"  {C.TOOL_RESULT}[TOOL]: Результат - {C.RESET} {tool_result}")
 
                 messages.append({
                     "role": "tool",

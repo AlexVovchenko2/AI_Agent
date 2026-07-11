@@ -15,3 +15,9 @@ LLM_CONFIG = {
 # Часовой пояс пользователя (определяем автоматически)
 USER_TIMEZONE = time.tzname[0]  
 USER_UTC_OFFSET = -time.timezone // 3600
+
+WORKSPACE_ROOT = Path("./workspace")
+WORKSPACE_ROOT.mkdir(exist_ok=True)
+(WORKSPACE_ROOT / "input").mkdir(exist_ok=True)
+(WORKSPACE_ROOT / "output").mkdir(exist_ok=True)
+(WORKSPACE_ROOT / "temp").mkdir(exist_ok=True)

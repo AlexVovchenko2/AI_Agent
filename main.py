@@ -7,8 +7,8 @@ from utils.colors import C
 
 def main():
     print(f"{C.HEADER}{'=' * 70}")
-    print(f"  ЗАГРУЗКА МОДЕЛИ...")
-    print(f"{'=' * 70}{C.RESET}")
+    print(f"{C.HEADER}{'ЗАГРУЗКА МОДЕЛИ...'}")
+    print(f"{C.HEADER}{'=' * 70}{C.RESET}")
     
     llm = Llama(
         model_path=str(MODEL_PATH),
@@ -16,8 +16,8 @@ def main():
     )
     
     print(f"{C.HEADER}{'=' * 70}")
-    print(f"  МОДЕЛЬ УСПЕШНО ЗАГРУЖЕНА!")
-    print(f"{'=' * 70}{C.RESET}")
+    print(f"{C.HEADER} { 'МОДЕЛЬ УСПЕШНО ЗАГРУЖЕНА!' }")
+    print(f"{C.HEADER}{'=' * 70}{C.RESET}")
     
     print(f"\n{C.AGENT}Агент готов. Напишите 'exit' для выхода{C.RESET}")
     print(f"{C.SYSTEM}Доступные инструменты: get_current_time{C.RESET}\n")
