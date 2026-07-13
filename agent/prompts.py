@@ -1,20 +1,12 @@
 # agent/prompts.py
 from pathlib import Path
 from datetime import datetime
+from config import WORKSPACE_ROOT, USER_TIMEZONE
 
 PROMPTS_DIR = Path("./prompts")
 
 def load_prompt(template_name: str, **kwargs) -> str:
-    """
-    Загружает .md шаблон и подставляет переменные.
-    
-    Args:
-        template_name: Имя файла без расширения (например, 'system')
-        **kwargs: Переменные для подстановки (например, user_timezone='UTC+3')
-    
-    Returns:
-        Готовый промпт с подставленными значениями
-    """
+    """Загружает .md шаблон и подставляет переменные."""
     template_path = PROMPTS_DIR / f"{template_name}.md"
     
     if not template_path.exists():
@@ -29,13 +21,31 @@ def load_prompt(template_name: str, **kwargs) -> str:
     
     return template
 
-def get_system_prompt(available_tools: list, user_timezone: str = "UTC") -> str:
+def get_system_prompt(
+    available_tools: list,
+    user_timezone: str = None,
+    workspace_root: str = None
+) -> str:
     """
     Генерирует системный промпт с текущим контекстом.
+    
+    Args:
+        available_tools: Список схем инструментов
+        user_timezone: Часовой пояс (опционально, по умолчанию из config)
+        workspace_root: Путь к workspace (опционально, по умолчанию из config)
+    
+    Returns:
+        Готовый системный промпт
     """
+    # Используем переданные значения или дефолтные из config
+    tz = user_timezone if user_timezone else USER_TIMEZONE
+    ws = workspace_root if workspace_root else str(WORKSPACE_ROOT)
+    
     # Формируем список доступных тулов
-    tools_list = "\n".join([f"- {tool['function']['name']}: {tool['function']['description']}" 
-                            for tool in available_tools])
+    tools_list = "\n".join([
+        f"- {tool['function']['name']}: {tool['function']['description']}" 
+        for tool in available_tools
+    ])
     
     # Текущая дата
     current_date = datetime.now().strftime("%Y-%m-%d (%A)")
@@ -43,7 +53,8 @@ def get_system_prompt(available_tools: list, user_timezone: str = "UTC") -> str:
     # Загружаем шаблон
     return load_prompt(
         "system",
+        workspace_root=ws,
         available_tools=tools_list,
-        user_timezone=user_timezone,
+        user_timezone=tz,
         current_date=current_date
     )

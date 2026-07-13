@@ -1,14 +1,26 @@
 # tools/registry.py     Диспетчер инструментов
 from .time_tool import time_tool_json, current_time_handler
+from .file_manager import (
+    file_manager_json, validate_path, read_file_handler, 
+    write_file_handler, list_dir_handler, delete_file_handler, 
+    get_workspace_structure_handler, create_directory_handler
+    )
 
 # список всех доступных тулов
 tools_json = [
-    time_tool_json
+    time_tool_json, 
+    *file_manager_json
 ]
 
-# маппинг: имя функции <-> реальное имя в Python-коде
+# маппинг: имя функции <=> реальное имя в Python-коде
 tool_map = {
-    "get_current_time": current_time_handler
+    "get_current_time": current_time_handler,
+    "read_file": read_file_handler,
+    "write_file": write_file_handler,
+    "list_directory": list_dir_handler,
+    "delete_file": delete_file_handler,
+    "get_workspace_structure": get_workspace_structure_handler,
+    "create_directory": create_directory_handler
 }
 
 

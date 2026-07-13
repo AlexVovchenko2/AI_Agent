@@ -4,7 +4,7 @@ from llama_cpp import Llama
 from tools.registry import tools_json, execute_tool
 from agent.prompts import get_system_prompt
 from utils.colors import C
-from config import USER_TIMEZONE
+from config import USER_TIMEZONE, get_workspace, MAX_ITERATIONS
 import json
 import re
 
@@ -23,7 +23,8 @@ def extract_tool_calls_from_text(text: str) -> list:
     
     # Нормализуем текст: заменяем {{ на { и }} на }
     normalized_text = text.replace('{{', '{').replace('}}', '}')
-    
+    normalized_text = normalized_text.replace('"""', '"')
+
     # Паттерн 1: теги <tool_call>...</tool_call>
     pattern = r'<tool_call>\s*({.*?})\s*</tool_call>'
     matches = re.findall(pattern, normalized_text, re.DOTALL)
@@ -77,7 +78,7 @@ def clean_tool_call_text(text: str) -> str:
     return normalized.strip()
 
 
-def run_agent(llm: Llama, user_input: str, max_iterations: int = 5) -> str:
+def run_agent(llm: Llama, user_input: str, max_iterations: int = MAX_ITERATIONS) -> str:
     """Запускает основной цикл агента
     
     Аргументы:
@@ -91,7 +92,8 @@ def run_agent(llm: Llama, user_input: str, max_iterations: int = 5) -> str:
     # Генерируем системный промпт
     system_prompt = get_system_prompt(
         available_tools=tools_json,
-        user_timezone=USER_TIMEZONE  
+        user_timezone=USER_TIMEZONE,  
+        workspace_root=get_workspace()
     )
 
     messages = [
