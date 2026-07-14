@@ -1,10 +1,9 @@
 # agent/prompts.py
 from pathlib import Path
 from datetime import datetime
-from config import WORKSPACE_ROOT, USER_TIMEZONE
+from config import WORKSPACE_ROOT, USER_TIMEZONE, AGENT_ROOT
 
-PROMPTS_DIR = Path("./prompts")
-
+PROMPTS_DIR = AGENT_ROOT / "prompts" 
 def load_prompt(template_name: str, **kwargs) -> str:
     """Загружает .md шаблон и подставляет переменные."""
     template_path = PROMPTS_DIR / f"{template_name}.md"

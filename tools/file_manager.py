@@ -2,20 +2,17 @@
 from pathlib import Path
 from config import get_workspace
 
-# JSON-схемы для LLM
+# JSON-схемы для LLM (оставляем как есть, они отличные)
 file_manager_json = [
     {
         "type": "function",
         "function": {
             "name": "create_directory",
-            "description": "Create a new directory. Creates all missing parent directories automatically. Use this instead of creating dummy files.",
+            "description": "Create a new directory. Creates all missing parent directories automatically.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "dirpath": {
-                        "type": "string",
-                        "description": "Relative path to the directory to create. Example: 'src/utils', 'A1/B2'"
-                    }
+                    "dirpath": {"type": "string", "description": "Relative path. Example: 'src/utils'"}
                 },
                 "required": ["dirpath"]
             }
@@ -25,27 +22,14 @@ file_manager_json = [
         "type": "function",
         "function": {
             "name": "write_file",
-            "description": "Write content to a file. Automatically creates all missing parent directories. DO NOT create dummy files to make directories exist.",
+            "description": "Write content to a file. Automatically creates all missing parent directories.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "filepath": {
-                        "type": "string",
-                        "description": "Relative path. Example: 'src/main.cpp'"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "Content to write. Use \\n for newlines. NEVER use triple quotes."
-                    },
-                    "mode": {
-                        "type": "string",
-                        "enum": ["write", "append"],
-                        "description": "write = overwrite, append = add to end"
-                    },
-                    "create_backup": {
-                        "type": "boolean",
-                        "description": "If true and file exists, creates a .backup copy before overwriting. Default is false."
-                    }
+                    "filepath": {"type": "string", "description": "Relative path. Example: 'src/main.kt'"},
+                    "content": {"type": "string", "description": "Content to write. Use \\n for newlines."},
+                    "mode": {"type": "string", "enum": ["write", "append"], "description": "write = overwrite, append = add to end"},
+                    "create_backup": {"type": "boolean", "description": "If true, creates a .backup copy before overwriting."}
                 },
                 "required": ["filepath", "content"]
             }
@@ -59,10 +43,7 @@ file_manager_json = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "filepath": {
-                        "type": "string",
-                        "description": "Relative path from workspace root. Example: 'src/main.cpp', 'data.txt'"
-                    }
+                    "filepath": {"type": "string", "description": "Relative path from workspace root."}
                 },
                 "required": ["filepath"]
             }
@@ -76,10 +57,7 @@ file_manager_json = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "dirpath": {
-                        "type": "string",
-                        "description": "Relative path from workspace root. Use '.' for root directory."
-                    }
+                    "dirpath": {"type": "string", "description": "Relative path. Use '.' for root."}
                 },
                 "required": []
             }
@@ -93,10 +71,7 @@ file_manager_json = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "filepath": {
-                        "type": "string",
-                        "description": "Relative path from workspace root."
-                    }
+                    "filepath": {"type": "string", "description": "Relative path from workspace root."}
                 },
                 "required": ["filepath"]
             }
@@ -106,100 +81,66 @@ file_manager_json = [
         "type": "function",
         "function": {
             "name": "get_workspace_structure",
-            "description": "Get the current directory tree structure of the workspace. Use this BEFORE writing files to understand the layout.",
-            "parameters": {
-                "type": "object",
-                "properties": {},
-                "required": []
-            }
+            "description": "Get the current directory tree structure of the workspace (max 4 levels deep).",
+            "parameters": {"type": "object", "properties": {}, "required": []}
         }
     }
 ]
 
 
-def create_directory_handler(dirpath: str) -> str:
-    """Создаёт директорию (и все родительские, если их нет)."""
-    try:
-        path = validate_path(dirpath)
-        path.mkdir(parents=True, exist_ok=True)
-        return f"Successfully created directory: {dirpath}"
-    except ValueError as e:
-        return str(e)
-    except Exception as e:
-        return f"Error creating directory: {e}"
-
-
 def validate_path(filepath: str) -> Path:
-    """
-    Проверяет, что путь внутри WORKSPACE_ROOT.
-    """
     workspace_root = get_workspace()
-    
-    # ВАЖНО: сначала склеиваем с корнем, потом делаем абсолютным
     path = (workspace_root / filepath).resolve()
     
-    # Проверяем, что итоговый путь всё ещё внутри workspace
     try:
         path.relative_to(workspace_root)
     except ValueError:
-        raise ValueError(
-            f"Access denied: '{filepath}' is outside workspace. "
-            f"Use only relative paths inside {workspace_root}"
-        )
+        raise ValueError(f"Access denied: '{filepath}' is outside workspace.")
     
     return path
-
-
-def read_file_handler(filepath: str) -> str:
-    """Читает файл из workspace."""
-    try:
-        path = validate_path(filepath)
-        if not path.exists():
-            return f"Error: file '{filepath}' does not exist"
-        if not path.is_file():
-            return f"Error: '{filepath}' is not a file"
-        
-        content = path.read_text(encoding="utf-8")
-        return content
-    except ValueError as e:
-        return str(e)
-    except Exception as e:
-        return f"Error reading file: {e}"
 
 
 def write_file_handler(filepath: str, content: str, mode: str = "write", create_backup: bool = False) -> str:
     """Записывает файл в workspace."""
     try:
         path = validate_path(filepath)
-        
-        # ВАЖНО: создаём директории автоматически
         path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Логика бэкапа (исправлена для Windows)
         if path.exists() and mode == "write" and create_backup:
             backup_path = path.with_suffix(path.suffix + ".backup")
-            # replace() перезаписывает файл, в отличие от rename() на Windows
             path.replace(backup_path) 
         
-        # Записываем
         write_mode = "w" if mode == "write" else "a"
-        path.write_text(content, encoding="utf-8")
+        with open(path, write_mode, encoding="utf-8") as f:
+            f.write(content)
         
-        return f"Successfully wrote to {filepath}"
+        # ✅ FIX 1: Возвращаем АБСОЛЮТНЫЙ путь и размер. Это заставляет LLM остановиться.
+        return f"SUCCESS: File written. Absolute path: {path.resolve()}. Bytes written: {len(content.encode('utf-8'))}."
+        
     except ValueError as e:
-        return str(e)
+        return f"ERROR: {e}"
     except Exception as e:
-        return f"Error writing file: {e}"
+        return f"ERROR: Failed to write file. Details: {str(e)}"
+
+
+def read_file_handler(filepath: str) -> str:
+    try:
+        path = validate_path(filepath)
+        if not path.exists():
+            return f"ERROR: File '{filepath}' does not exist"
+        if not path.is_file():
+            return f"ERROR: '{filepath}' is not a file"
+        
+        return path.read_text(encoding="utf-8")
+    except Exception as e:
+        return f"ERROR: {str(e)}"
 
 
 def list_dir_handler(dirpath: str = ".") -> str:
-    """Показывает содержимое директории в workspace."""
     try:
         path = validate_path(dirpath)
-        if not path.exists():
-            return f"Error: directory '{dirpath}' does not exist"
-        if not path.is_dir():
-            return f"Error: '{dirpath}' is not a directory"
+        if not path.exists() or not path.is_dir():
+            return f"ERROR: Directory '{dirpath}' does not exist"
         
         items = []
         for item in sorted(path.iterdir()):
@@ -207,45 +148,51 @@ def list_dir_handler(dirpath: str = ".") -> str:
             items.append(f"{prefix} {item.name}")
         
         return "\n".join(items) if items else "(empty directory)"
-    except ValueError as e:
-        return str(e)
     except Exception as e:
-        return f"Error listing directory: {e}"
+        return f"ERROR: {str(e)}"
 
 
 def delete_file_handler(filepath: str) -> str:
-    """Удаляет файл из workspace."""
     try:
         path = validate_path(filepath)
-        if not path.exists():
-            return f"Error: file '{filepath}' does not exist"
-        if not path.is_file():
-            return f"Error: '{filepath}' is not a file"
+        if not path.exists() or not path.is_file():
+            return f"ERROR: File '{filepath}' does not exist"
         
         path.unlink()
-        return f"Deleted {filepath}"
-    except ValueError as e:
-        return str(e)
+        return f"SUCCESS: Deleted {filepath}"
     except Exception as e:
-        return f"Error deleting file: {e}"
+        return f"ERROR: {str(e)}"
 
 
 def get_workspace_structure_handler() -> str:
-    """Возвращает дерево директорий и файлов workspace."""
-
+    """Возвращает дерево директорий (ОГРАНИЧЕНО 4 уровнями глубины для защиты контекста)."""
     workspace_root = get_workspace()
-
     if workspace_root is None:
-        return "Error: Workspace root is not set!"
+        return "ERROR: Workspace root is not set!"
     
     tree = []
+    max_depth = 4 # ✅ FIX 2: Защита от переполнения контекста в больших проектах
+    
     for path in sorted(workspace_root.rglob("*")):
-        depth = len(path.relative_to(workspace_root).parts)
+        relative_parts = path.relative_to(workspace_root).parts
+        if len(relative_parts) > max_depth:
+            continue # Пропускаем слишком глубокие файлы (например, node_modules)
+            
+        depth = len(relative_parts)
         indent = "    " * depth
         
         if path.is_dir():
             tree.append(f"{indent}📁 {path.name}/")
         else:
-            tree.append(f"{indent} {path.name}")
+            tree.append(f"{indent}📄 {path.name}")
     
     return "\n".join(tree) if tree else "Workspace is empty."
+
+
+def create_directory_handler(dirpath: str) -> str:
+    try:
+        path = validate_path(dirpath)
+        path.mkdir(parents=True, exist_ok=True)
+        return f"SUCCESS: Created directory. Absolute path: {path.resolve()}"
+    except Exception as e:
+        return f"ERROR: {str(e)}"
